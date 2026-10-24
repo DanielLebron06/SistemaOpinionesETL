@@ -1,5 +1,7 @@
 <Solution>
-  <Folder Name="/Data base/" />
+  <Folder Name="/database/">
+    <File Path="database/script_completo.sql" />
+  </Folder>
   <Project Path="ETL.ConsoleApp/ETL.ConsoleApp.csproj" />
   <Project Path="ETL.Core/ETL.Core.csproj" />
 </Solution>
