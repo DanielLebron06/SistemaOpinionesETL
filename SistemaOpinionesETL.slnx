@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ETL.ConsoleApp/ETL.ConsoleApp.csproj" />
+  <Project Path="ETL.Core/ETL.Core.csproj" />
+</Solution>
