@@ -1,4 +1,4 @@
-﻿using ETL.Core.Entities;
+using ETL.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ETL.Data.Services;
@@ -6,6 +6,7 @@ namespace ETL.Data.Services;
 public class OpinionService
 {
     private const int BatchSize = 500;
+    private const string IdClienteAnonimo = "ANONIMO";
 
     private readonly SistemaOpinionesClientesContext _context;
 
@@ -14,26 +15,32 @@ public class OpinionService
         _context = context;
     }
 
-    public Task<(int procesados, int insertados, int rechazados)> CargarEncuestasAsync(string rutaCsv, string idFuenteDefault)
+    public Task<(int procesados, int insertados, int rechazados)> CargarEncuestasAsync(
+        string rutaCsv, string idFuenteDefault, int idPositivo, int idNeutral, int idNegativo)
         => CargarArchivoOpinionesAsync(
             rutaCsv,
             idFuenteDefault,
             "Encuestas",
-            ParseEncuesta);
+            (string[] fields, string idFuente, out OpinionesCliente? op, out string? reason)
+                => ParseEncuesta(fields, idFuente, idPositivo, idNeutral, idNegativo, out op, out reason));
 
-    public Task<(int procesados, int insertados, int rechazados)> CargarComentariosSocialesAsync(string rutaCsv, string idFuenteDefault)
+    public Task<(int procesados, int insertados, int rechazados)> CargarComentariosSocialesAsync(
+        string rutaCsv, string idFuenteDefault, int idNeutral)
         => CargarArchivoOpinionesAsync(
             rutaCsv,
             idFuenteDefault,
             "ComentariosSociales",
-            ParseComentarioSocial);
+            (string[] fields, string idFuente, out OpinionesCliente? op, out string? reason)
+                => ParseComentarioSocial(fields, idFuente, idNeutral, out op, out reason));
 
-    public Task<(int procesados, int insertados, int rechazados)> CargarResenasWebAsync(string rutaCsv, string idFuenteDefault)
+    public Task<(int procesados, int insertados, int rechazados)> CargarResenasWebAsync(
+        string rutaCsv, string idFuenteDefault, int idPositivo, int idNeutral, int idNegativo)
         => CargarArchivoOpinionesAsync(
             rutaCsv,
             idFuenteDefault,
             "ResenasWeb",
-            ParseResenaWeb);
+            (string[] fields, string idFuente, out OpinionesCliente? op, out string? reason)
+                => ParseResenaWeb(fields, idFuente, idPositivo, idNeutral, idNegativo, out op, out reason));
 
     private delegate bool OpinionRowParser(string[] fields, string idFuente, out OpinionesCliente? opinion, out string? rejectReason);
 
@@ -57,17 +64,20 @@ public class OpinionService
             return (0, 0, 0);
         }
 
-        var clienteIds = await _context.Clientes.AsNoTracking()
+        var clienteIds = (await _context.Clientes.AsNoTracking()
             .Select(c => c.IdCliente)
-            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var productoIds = await _context.Productos.AsNoTracking()
+        var productoIds = (await _context.Productos.AsNoTracking()
             .Select(p => p.IdProducto)
-            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var fuenteIds = await _context.FuentesDatos.AsNoTracking()
+        var fuenteIds = (await _context.FuentesDatos.AsNoTracking()
             .Select(f => f.IdFuente)
-            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         if (!fuenteIds.Contains(idFuenteDefault))
         {
@@ -79,9 +89,9 @@ public class OpinionService
             .Select(o => new { o.IdCliente, o.IdProducto, o.Fecha, o.Comentario })
             .ToListAsync();
 
-        var clavesOpinion = new HashSet<string>(
-            clavesExistentes.Select(CrearClaveOpinion),
-            StringComparer.Ordinal);
+        var clavesOpinion = clavesExistentes
+            .Select(o => CrearClaveOpinion(o.IdCliente, o.IdProducto, o.Fecha, o.Comentario))
+            .ToHashSet(StringComparer.Ordinal);
 
         var lote = new List<OpinionesCliente>(BatchSize);
         var clavesLote = new HashSet<string>(StringComparer.Ordinal);
@@ -108,8 +118,8 @@ public class OpinionService
                 if (opinion.IdProducto.Length > 20)
                     opinion.IdProducto = opinion.IdProducto[..20];
 
-                AsegurarCliente(clienteIds, opinion.IdCliente);
-                AsegurarProducto(productoIds, opinion.IdProducto);
+                EncolarClienteSiFalta(clienteIds, opinion.IdCliente);
+                EncolarProductoSiFalta(productoIds, opinion.IdProducto);
 
                 var clave = CrearClaveOpinion(opinion);
                 if (!clavesOpinion.Add(clave) || !clavesLote.Add(clave))
@@ -157,6 +167,7 @@ public class OpinionService
 
         try
         {
+            await GuardarMaestrosPendientesAsync();
             await _context.OpinionesClientes.AddRangeAsync(lote);
             await _context.SaveChangesAsync();
             var count = lote.Count;
@@ -169,14 +180,16 @@ public class OpinionService
         {
             Console.WriteLine($"[Opiniones] Lote fallido ({lote.Count} filas), reintento fila a fila: {ex.InnerException?.Message ?? ex.Message}");
             _context.ChangeTracker.Clear();
+            await RecargarIdsMaestrosAsync(clienteIds, productoIds);
 
             int ok = 0, fail = 0;
             foreach (var opinion in lote)
             {
                 try
                 {
-                    AsegurarCliente(clienteIds, opinion.IdCliente);
-                    AsegurarProducto(productoIds, opinion.IdProducto);
+                    EncolarClienteSiFalta(clienteIds, opinion.IdCliente);
+                    EncolarProductoSiFalta(productoIds, opinion.IdProducto);
+                    await GuardarMaestrosPendientesAsync();
                     _context.OpinionesClientes.Add(opinion);
                     await _context.SaveChangesAsync();
                     ok++;
@@ -196,9 +209,31 @@ public class OpinionService
         }
     }
 
-    private void AsegurarCliente(HashSet<string> idsConocidos, string idCliente)
+    private async Task GuardarMaestrosPendientesAsync()
     {
-        if (idsConocidos.Contains(idCliente))
+        var hayMaestrosNuevos =
+            _context.ChangeTracker.Entries<Cliente>().Any(e => e.State == EntityState.Added)
+            || _context.ChangeTracker.Entries<Producto>().Any(e => e.State == EntityState.Added);
+
+        if (hayMaestrosNuevos)
+            await _context.SaveChangesAsync();
+    }
+
+    private async Task RecargarIdsMaestrosAsync(HashSet<string> clienteIds, HashSet<string> productoIds)
+    {
+        clienteIds.Clear();
+        productoIds.Clear();
+
+        foreach (var id in await _context.Clientes.AsNoTracking().Select(c => c.IdCliente).ToListAsync())
+            clienteIds.Add(id);
+
+        foreach (var id in await _context.Productos.AsNoTracking().Select(p => p.IdProducto).ToListAsync())
+            productoIds.Add(id);
+    }
+
+    private void EncolarClienteSiFalta(HashSet<string> idsConocidos, string? idCliente)
+    {
+        if (idCliente is null || idsConocidos.Contains(idCliente))
             return;
 
         _context.Clientes.Add(new Cliente
@@ -210,7 +245,7 @@ public class OpinionService
         idsConocidos.Add(idCliente);
     }
 
-    private void AsegurarProducto(HashSet<string> idsConocidos, string idProducto)
+    private void EncolarProductoSiFalta(HashSet<string> idsConocidos, string idProducto)
     {
         if (idsConocidos.Contains(idProducto))
             return;
@@ -230,7 +265,10 @@ public class OpinionService
     private static string CrearClaveOpinion(string? idCliente, string idProducto, DateTime fecha, string comentario)
         => $"{idCliente ?? string.Empty}|{idProducto}|{fecha:O}|{comentario}";
 
-    private static bool ParseEncuesta(string[] p, string idFuente, out OpinionesCliente? opinion, out string? rejectReason)
+    private static bool ParseEncuesta(
+        string[] p, string idFuente,
+        int idPositivo, int idNeutral, int idNegativo,
+        out OpinionesCliente? opinion, out string? rejectReason)
     {
         opinion = null;
         rejectReason = null;
@@ -276,7 +314,7 @@ public class OpinionService
             IdCliente = idCliente,
             IdProducto = idProducto,
             IdFuente = idFuente,
-            IdTipoFeedback = MapearTipoFeedback(clasificacion),
+            IdTipoFeedback = MapearTipoFeedback(clasificacion, idPositivo, idNeutral, idNegativo),
             Fecha = fecha,
             Comentario = comentario,
             Puntaje = puntaje,
@@ -286,7 +324,9 @@ public class OpinionService
         return true;
     }
 
-    private static bool ParseComentarioSocial(string[] p, string idFuente, out OpinionesCliente? opinion, out string? rejectReason)
+    private static bool ParseComentarioSocial(
+        string[] p, string idFuente, int idNeutral,
+        out OpinionesCliente? opinion, out string? rejectReason)
     {
         opinion = null;
         rejectReason = null;
@@ -297,14 +337,18 @@ public class OpinionService
             return false;
         }
 
-        var idCliente = CsvLineParser.NormalizarId(p[1]);
         var idProducto = CsvLineParser.NormalizarId(p[2]);
 
-        if (string.IsNullOrEmpty(idCliente) || string.IsNullOrEmpty(idProducto))
+        if (string.IsNullOrEmpty(idProducto))
         {
-            rejectReason = "cliente o producto vacío";
+            rejectReason = "producto vacío";
             return false;
         }
+
+        // Si IdCliente viene vacío (comentario anónimo en redes sociales), usamos centinela
+        var idCliente = CsvLineParser.NormalizarId(p[1]);
+        if (string.IsNullOrEmpty(idCliente))
+            idCliente = IdClienteAnonimo;
 
         if (!CsvLineParser.TryParseDate(p[4], out var fecha))
         {
@@ -325,7 +369,7 @@ public class OpinionService
             IdCliente = idCliente,
             IdProducto = idProducto,
             IdFuente = idFuente,
-            IdTipoFeedback = 2,
+            IdTipoFeedback = idNeutral,
             Fecha = fecha,
             Comentario = comentario,
             Puntaje = 3,
@@ -335,7 +379,10 @@ public class OpinionService
         return true;
     }
 
-    private static bool ParseResenaWeb(string[] p, string idFuente, out OpinionesCliente? opinion, out string? rejectReason)
+    private static bool ParseResenaWeb(
+        string[] p, string idFuente,
+        int idPositivo, int idNeutral, int idNegativo,
+        out OpinionesCliente? opinion, out string? rejectReason)
     {
         opinion = null;
         rejectReason = null;
@@ -382,7 +429,7 @@ public class OpinionService
             IdCliente = idCliente,
             IdProducto = idProducto,
             IdFuente = idFuente,
-            IdTipoFeedback = rating >= 4 ? 1 : (rating <= 2 ? 3 : 2),
+            IdTipoFeedback = rating >= 4 ? idPositivo : (rating <= 2 ? idNegativo : idNeutral),
             Fecha = fecha,
             Comentario = comentario,
             Puntaje = rating,
@@ -392,13 +439,13 @@ public class OpinionService
         return true;
     }
 
-    private static int MapearTipoFeedback(string clasificacion)
+    private static int MapearTipoFeedback(string clasificacion, int idPositivo, int idNeutral, int idNegativo)
     {
         var c = clasificacion.Trim().ToLowerInvariant();
         if (c.Contains("pos"))
-            return 1;
+            return idPositivo;
         if (c.Contains("neg"))
-            return 3;
-        return 2;
+            return idNegativo;
+        return idNeutral;
     }
 }

@@ -22,9 +22,10 @@ public class ClienteService
             return (0, 0, 0);
         }
 
-        var idsExistentes = await _context.Clientes.AsNoTracking()
+        var idsExistentes = (await _context.Clientes.AsNoTracking()
             .Select(c => c.IdCliente)
-            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var nuevos = new List<Cliente>();
 

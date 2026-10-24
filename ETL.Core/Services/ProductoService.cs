@@ -22,9 +22,10 @@ public class ProductoService
             return (0, 0, 0);
         }
 
-        var idsExistentes = await _context.Productos.AsNoTracking()
+        var idsExistentes = (await _context.Productos.AsNoTracking()
             .Select(p => p.IdProducto)
-            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var nuevos = new List<Producto>();
 

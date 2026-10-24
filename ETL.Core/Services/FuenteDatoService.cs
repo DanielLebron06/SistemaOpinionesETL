@@ -22,9 +22,10 @@ public class FuenteDatoService
             return (0, 0, 0);
         }
 
-        var idsExistentes = await _context.FuentesDatos.AsNoTracking()
+        var idsExistentes = (await _context.FuentesDatos.AsNoTracking()
             .Select(f => f.IdFuente)
-            .ToHashSetAsync(StringComparer.OrdinalIgnoreCase);
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var nuevos = new List<FuentesDato>();
 
