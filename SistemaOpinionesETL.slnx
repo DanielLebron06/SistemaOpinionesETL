@@ -1,7 +1,23 @@
 <Solution>
   <Folder Name="/database/">
     <File Path="database/script_completo.sql" />
+    <File Path="database/staging_script.sql" />
   </Folder>
-  <Project Path="ETL.ConsoleApp/ETL.ConsoleApp.csproj" />
-  <Project Path="ETL.Core/ETL.Core.csproj" />
+  <Folder Name="/1. Domain/">
+    <Project Path="ETL.Domain/ETL.Domain.csproj" />
+  </Folder>
+  <Folder Name="/2. Application/">
+    <Project Path="ETL.Application/ETL.Application.csproj" />
+  </Folder>
+  <Folder Name="/3. Infrastructure/">
+    <Project Path="ETL.Infrastructure/ETL.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/4. Presentation/">
+    <Project Path="ETL.Worker/ETL.Worker.csproj" />
+    <Project Path="ETL.Api/ETL.Api.csproj" />
+  </Folder>
+  <Folder Name="/Carga OLTP (actividad anterior)/">
+    <Project Path="ETL.ConsoleApp/ETL.ConsoleApp.csproj" />
+    <Project Path="ETL.Core/ETL.Core.csproj" />
+  </Folder>
 </Solution>

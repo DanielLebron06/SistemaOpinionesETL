@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <rect width="1600" height="1000" fill="#ffffff"/>
+
+  <text x="800" y="44" text-anchor="middle" font-size="28" font-weight="700" fill="#0f172a">Arquitectura del Proceso ETL — Sistema de Análisis de Opiniones de Clientes</text>
+  <text x="800" y="74" text-anchor="middle" font-size="16" fill="#475569">Worker Service .NET 8 · Clean Architecture · Fase de Extracción (E) hacia staging</text>
+
+  <!-- ============ FUENTES ============ -->
+  <rect x="30" y="110" width="330" height="710" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="195" y="142" text-anchor="middle" font-size="19" font-weight="700" fill="#0f172a">FUENTES DE DATOS</text>
+
+  <!-- CSV -->
+  <rect x="55" y="170" width="280" height="170" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+  <text x="195" y="200" text-anchor="middle" font-size="18" font-weight="700" fill="#065f46">1. Archivo CSV</text>
+  <text x="195" y="228" text-anchor="middle" font-size="14" fill="#064e3b">Encuestas internas</text>
+  <text x="195" y="252" text-anchor="middle" font-size="14" font-family="Consolas, monospace" fill="#064e3b">data/surveys_part1.csv</text>
+  <text x="195" y="282" text-anchor="middle" font-size="13" fill="#047857">500 registros · UTF-8</text>
+  <text x="195" y="306" text-anchor="middle" font-size="13" fill="#047857">Lectura en streaming</text>
+
+  <!-- BD -->
+  <rect x="55" y="365" width="280" height="190" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="195" y="395" text-anchor="middle" font-size="18" font-weight="700" fill="#1e3a8a">2. BD Relacional (OLTP)</text>
+  <text x="195" y="423" text-anchor="middle" font-size="14" fill="#1e40af">SQL Server LocalDB</text>
+  <text x="195" y="447" text-anchor="middle" font-size="14" font-family="Consolas, monospace" fill="#1e40af">SistemaOpinionesClientes</text>
+  <text x="195" y="475" text-anchor="middle" font-size="13" fill="#1d4ed8">Reseñas web (CodigoOrigen=WebReview)</text>
+  <text x="195" y="499" text-anchor="middle" font-size="13" fill="#1d4ed8">200 registros</text>
+  <text x="195" y="523" text-anchor="middle" font-size="13" fill="#1d4ed8">Conexión ApplicationIntent=ReadOnly</text>
+
+  <!-- API -->
+  <rect x="55" y="580" width="280" height="205" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+  <text x="195" y="610" text-anchor="middle" font-size="18" font-weight="700" fill="#7c2d12">3. API REST</text>
+  <text x="195" y="638" text-anchor="middle" font-size="14" fill="#9a3412">ETL.Api (ASP.NET Core 8)</text>
+  <text x="195" y="662" text-anchor="middle" font-size="14" font-family="Consolas, monospace" fill="#9a3412">GET /api/comentarios</text>
+  <text x="195" y="690" text-anchor="middle" font-size="13" fill="#c2410c">Comentarios de redes sociales</text>
+  <text x="195" y="714" text-anchor="middle" font-size="13" fill="#c2410c">200 registros · paginado (50/pág.)</text>
+  <text x="195" y="738" text-anchor="middle" font-size="13" fill="#c2410c">Autenticación: header X-Api-Key</text>
+  <text x="195" y="762" text-anchor="middle" font-size="13" fill="#c2410c">Swagger / OpenAPI</text>
+
+  <!-- ============ WORKER ============ -->
+  <rect x="420" y="110" width="760" height="710" rx="14" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2.5"/>
+  <text x="800" y="142" text-anchor="middle" font-size="20" font-weight="700" fill="#3b0764">SERVICIO ETL — ETL.Worker (Worker Service .NET 8)</text>
+  <text x="800" y="166" text-anchor="middle" font-size="14" fill="#5b21b6">Inyección de dependencias · ILogger + Serilog · appsettings.json + User Secrets</text>
+
+  <!-- Presentation layer -->
+  <rect x="445" y="185" width="710" height="105" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="465" y="210" font-size="15" font-weight="700" fill="#4c1d95">Capa de Presentación / Host</text>
+  <rect x="465" y="222" width="215" height="54" rx="8" fill="#fff" stroke="#a78bfa"/>
+  <text x="572" y="245" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">ExtractionWorker</text>
+  <text x="572" y="265" text-anchor="middle" font-size="12" fill="#475569">BackgroundService</text>
+  <rect x="692" y="222" width="215" height="54" rx="8" fill="#fff" stroke="#a78bfa"/>
+  <text x="799" y="245" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">Program.cs</text>
+  <text x="799" y="265" text-anchor="middle" font-size="12" fill="#475569">DI · Options · ValidateOnStart</text>
+  <rect x="919" y="222" width="215" height="54" rx="8" fill="#fff" stroke="#a78bfa"/>
+  <text x="1026" y="245" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">Configuración</text>
+  <text x="1026" y="265" text-anchor="middle" font-size="12" fill="#475569">appsettings.json · User Secrets</text>
+
+  <!-- Application layer -->
+  <rect x="445" y="305" width="710" height="125" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="465" y="330" font-size="15" font-weight="700" fill="#312e81">Capa de Aplicación (casos de uso + contratos)</text>
+  <rect x="465" y="342" width="300" height="74" rx="8" fill="#fff" stroke="#818cf8"/>
+  <text x="615" y="368" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">ExtractionOrchestrator</text>
+  <text x="615" y="388" text-anchor="middle" font-size="12" fill="#475569">Parallel.ForEachAsync · lotes</text>
+  <text x="615" y="405" text-anchor="middle" font-size="12" fill="#475569">Stopwatch · métricas · tolerancia a fallos</text>
+  <rect x="780" y="342" width="170" height="74" rx="8" fill="#fff" stroke="#818cf8" stroke-dasharray="5 3"/>
+  <text x="865" y="372" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">«interface»</text>
+  <text x="865" y="393" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">IExtractor</text>
+  <rect x="964" y="342" width="170" height="74" rx="8" fill="#fff" stroke="#818cf8" stroke-dasharray="5 3"/>
+  <text x="1049" y="372" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">«interface»</text>
+  <text x="1049" y="393" text-anchor="middle" font-size="14" font-weight="600" fill="#1e1b4b">IStagingRepository</text>
+
+  <!-- Infrastructure layer -->
+  <rect x="445" y="445" width="710" height="225" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="465" y="470" font-size="15" font-weight="700" fill="#1e3a8a">Capa de Infraestructura (implementaciones)</text>
+  <rect x="465" y="485" width="215" height="70" rx="8" fill="#fff" stroke="#10b981" stroke-width="2"/>
+  <text x="572" y="512" text-anchor="middle" font-size="14" font-weight="600" fill="#065f46">CsvExtractor</text>
+  <text x="572" y="532" text-anchor="middle" font-size="12" fill="#475569">CsvHelper · validación</text>
+  <rect x="692" y="485" width="215" height="70" rx="8" fill="#fff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="799" y="512" text-anchor="middle" font-size="14" font-weight="600" fill="#1e3a8a">DatabaseExtractor</text>
+  <text x="799" y="532" text-anchor="middle" font-size="12" fill="#475569">ADO.NET · query parametrizado</text>
+  <rect x="919" y="485" width="215" height="70" rx="8" fill="#fff" stroke="#f97316" stroke-width="2"/>
+  <text x="1026" y="512" text-anchor="middle" font-size="14" font-weight="600" fill="#7c2d12">ApiExtractor</text>
+  <text x="1026" y="532" text-anchor="middle" font-size="12" fill="#475569">IHttpClientFactory · Resilience</text>
+  <rect x="465" y="592" width="215" height="62" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="572" y="618" text-anchor="middle" font-size="14" font-weight="600" fill="#1e293b">Options + ParseoSeguro</text>
+  <text x="572" y="638" text-anchor="middle" font-size="12" fill="#475569">configuración tipada</text>
+  <rect x="692" y="592" width="442" height="62" rx="8" fill="#fff" stroke="#0891b2" stroke-width="2"/>
+  <text x="913" y="618" text-anchor="middle" font-size="14" font-weight="600" fill="#164e63">SqlStagingRepository (DataLoader)</text>
+  <text x="913" y="638" text-anchor="middle" font-size="12" fill="#475569">SqlBulkCopy por lotes · bitácora de control</text>
+
+  <!-- Domain -->
+  <rect x="445" y="682" width="710" height="62" rx="10" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+  <text x="465" y="705" font-size="15" font-weight="700" fill="#713f12">Capa de Dominio</text>
+  <text x="800" y="731" text-anchor="middle" font-size="14" fill="#713f12"><tspan font-weight="700">OpinionExtraida</tspan> (modelo común de las 3 fuentes) · <tspan font-weight="700">TipoFuente</tspan> (CSV | BaseDatos | API)</text>
+
+  <!-- Logger service -->
+  <rect x="445" y="756" width="710" height="50" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="800" y="787" text-anchor="middle" font-size="14" fill="#1e293b"><tspan font-weight="700">LoggerService:</tspan> ILogger&lt;T&gt; + Serilog → consola y archivo logs/etl-extraccion-AAAAMMDD.log</text>
+
+  <!-- ============ DESTINO ============ -->
+  <rect x="1240" y="110" width="330" height="520" rx="14" fill="#f0fdfa" stroke="#0d9488" stroke-width="2"/>
+  <text x="1405" y="142" text-anchor="middle" font-size="19" font-weight="700" fill="#134e4a">BASE DE DATOS ANALÍTICA</text>
+  <text x="1405" y="166" text-anchor="middle" font-size="14" font-family="Consolas, monospace" fill="#115e59">SistemaOpinionesAnalitica</text>
+  <!-- cylinder -->
+  <path d="M1275,200 a130,22 0 0,0 260,0 v175 a130,22 0 0,1 -260,0 z" fill="#ccfbf1" stroke="#0d9488" stroke-width="2"/>
+  <ellipse cx="1405" cy="200" rx="130" ry="22" fill="#99f6e4" stroke="#0d9488" stroke-width="2"/>
+  <text x="1405" y="206" text-anchor="middle" font-size="15" font-weight="700" fill="#134e4a">Esquema stg (Staging)</text>
+  <text x="1405" y="258" text-anchor="middle" font-size="14" font-family="Consolas, monospace" font-weight="700" fill="#134e4a">stg.Opiniones</text>
+  <text x="1405" y="280" text-anchor="middle" font-size="12" fill="#115e59">datos extraídos sin transformar</text>
+  <text x="1405" y="320" text-anchor="middle" font-size="14" font-family="Consolas, monospace" font-weight="700" fill="#134e4a">stg.ControlExtraccion</text>
+  <text x="1405" y="342" text-anchor="middle" font-size="12" fill="#115e59">métricas, estado y errores por lote</text>
+
+  <rect x="1275" y="430" width="260" height="170" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="1405" y="458" text-anchor="middle" font-size="15" font-weight="700" fill="#475569">Data Warehouse</text>
+  <text x="1405" y="478" text-anchor="middle" font-size="12" fill="#64748b">(siguientes fases T y L)</text>
+  <text x="1405" y="508" text-anchor="middle" font-size="13" fill="#475569">Fact_Opiniones</text>
+  <text x="1405" y="530" text-anchor="middle" font-size="13" fill="#475569">Dim_Cliente · Dim_Producto</text>
+  <text x="1405" y="552" text-anchor="middle" font-size="13" fill="#475569">Dim_Fuente · Dim_Tiempo</text>
+  <text x="1405" y="574" text-anchor="middle" font-size="13" fill="#475569">Dim_TipoFeedback</text>
+  <line x1="1405" y1="398" x2="1405" y2="428" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ag)"/>
+  <text x="1415" y="418" font-size="12" fill="#64748b">Transformación</text>
+
+  <!-- Dashboard -->
+  <rect x="1240" y="665" width="330" height="155" rx="14" fill="#fdf2f8" stroke="#db2777" stroke-width="2"/>
+  <text x="1405" y="697" text-anchor="middle" font-size="19" font-weight="700" fill="#831843">VISUALIZACIÓN / DASHBOARD</text>
+  <text x="1405" y="725" text-anchor="middle" font-size="14" fill="#9d174d">Power BI</text>
+  <text x="1405" y="751" text-anchor="middle" font-size="13" fill="#9d174d">Satisfacción por producto, canal,</text>
+  <text x="1405" y="771" text-anchor="middle" font-size="13" fill="#9d174d">tendencia temporal y clasificación</text>
+  
+  <line x1="1405" y1="630" x2="1405" y2="663" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ag)"/>
+
+  <!-- ============ FLECHAS ============ -->
+  <path d="M335,255 L380,255 L380,520 L463,520" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="340" y="247" font-size="11" fill="#047857">lectura async</text>
+  <path d="M335,460 L395,460 L395,566 L799,566 L799,558" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="338" y="452" font-size="11" fill="#1d4ed8">SELECT @param</text>
+  <path d="M335,680 L410,680 L410,579 L1026,579 L1026,558" fill="none" stroke="#f97316" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="338" y="672" font-size="11" fill="#c2410c">GET + API key</text>
+
+  <path d="M1134,623 L1208,623 L1208,300 L1273,300" fill="none" stroke="#0891b2" stroke-width="3" marker-end="url(#a)"/>
+  <text x="1200" y="470" font-size="12" font-weight="600" fill="#0e7490" text-anchor="middle" transform="rotate(-90 1200 470)">SqlBulkCopy (lotes de 500)</text>
+
+  <!-- ============ LEYENDA / CALIDAD ============ -->
+  <rect x="30" y="850" width="1540" height="130" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="50" y="878" font-size="16" font-weight="700" fill="#0f172a">Atributos de calidad</text>
+  <text x="50" y="908" font-size="14" fill="#1e293b"><tspan font-weight="700" fill="#16a34a">Rendimiento:</tspan> extracción async en paralelo, streaming (IAsyncEnumerable), SqlBulkCopy por lotes, Stopwatch.</text>
+  <text x="50" y="933" font-size="14" fill="#1e293b"><tspan font-weight="700" fill="#2563eb">Escalabilidad:</tspan> nueva fuente = nueva clase IExtractor + sección en appsettings.json (Habilitado: true/false).</text>
+  <text x="810" y="908" font-size="14" fill="#1e293b"><tspan font-weight="700" fill="#dc2626">Seguridad:</tspan> User Secrets para la API key, Integrated Security, ReadOnly, consultas parametrizadas.</text>
+  <text x="810" y="933" font-size="14" fill="#1e293b"><tspan font-weight="700" fill="#7c3aed">Mantenibilidad:</tspan> Clean Architecture (4 capas), SOLID, interfaces, DI, opciones tipadas.</text>
+  <text x="50" y="961" font-size="13" fill="#64748b">Línea continua = implementado en esta actividad (Extracción) · Línea discontinua = fases siguientes (Transformación, Carga y Visualización)</text>
+</svg>
