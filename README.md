@@ -2,11 +2,12 @@
 
 Proceso ETL en **.NET 8** que integra opiniones de clientes desde tres fuentes heterogéneas (**CSV**, **base de datos relacional** y **API REST**) y las deposita en el área de *staging* de una **base de datos analítica** en SQL Server.
 
-El repositorio contiene dos etapas del proyecto:
+El repositorio contiene las siguientes etapas del proyecto:
 
 | Etapa | Proyectos | Descripción |
 |---|---|---|
 | **Actividad 1 – Arquitectura y Extracción (E)** | `ETL.Domain`, `ETL.Application`, `ETL.Infrastructure`, `ETL.Worker`, `ETL.Api` | Worker Service con Clean Architecture que extrae de CSV, BD y API y guarda en `stg.Opiniones`. |
+| **Carga de dimensiones del Data Warehouse** | `ETL.Worker`, `ETL.Application`, `ETL.Infrastructure`, `database` | Carga cinco dimensiones en el esquema `dw` a partir de staging y de los catálogos OLTP. |
 | Carga de la BD transaccional (actividad anterior) | `ETL.Core`, `ETL.ConsoleApp` | Carga los CSV originales en la BD OLTP `SistemaOpinionesClientes`, que ahora es la **fuente relacional** del Worker. |
 
 ---
@@ -69,6 +70,20 @@ ETL.Api             → API REST de comentarios de redes sociales (fuente extern
 5. Validar en SQL Server con las consultas del final de `database/staging_script.sql`.
 
 Los logs se guardan en `ETL.Worker/logs/etl-extraccion-AAAAMMDD.log`.
+
+## Carga de dimensiones del Data Warehouse
+
+Con `SistemaOpinionesClientes` cargada y `stg.Opiniones` poblada en `SistemaOpinionesAnalitica`, ejecutar desde la raíz del repositorio:
+
+```powershell
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database/dw_script.sql
+dotnet run --project ETL.Worker -- --Etl:SoloDimensiones=true
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database/dw_validacion.sql
+```
+
+Las dos bases deben estar en la misma instancia. El modo de dimensiones trabaja con los datos ya extraídos. El procedimiento `dw.CargarDimensiones` toma los clientes y productos del OLTP y deriva las fuentes por canal, las fechas y los tipos de feedback de staging. Los tipos de feedback también incorporan el catálogo OLTP. Cada dimensión tiene una clave sustituta y una restricción única sobre su clave de negocio.
+
+La operación conserva las claves sustitutas y actualiza los atributos de clientes y productos en su fila existente (SCD tipo 1). Una transacción confirma las cinco dimensiones y la bitácora como una unidad. Si los insumos siguen iguales, repetir el comando registra cero inserciones y cero actualizaciones. El Worker registra los conteos por dimensión en `ETL.Worker/logs/etl-dimensiones-AAAAMMDD.log`.
 
 ---
 

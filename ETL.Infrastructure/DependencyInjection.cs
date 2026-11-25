@@ -14,12 +14,19 @@ public static class DependencyInjection
     /// Registra los extractores de forma modular: cada fuente se activa o desactiva
     /// con "Habilitado" en appsettings.json, sin tocar el código del orquestador.
     /// </summary>
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuracion)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuracion,
+        bool soloDimensiones = false)
     {
         services.AddOptions<StagingOptions>()
             .Bind(configuracion.GetSection(StagingOptions.Seccion))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        if (soloDimensiones)
+        {
+            services.AddSingleton<IDimensionLoader, SqlDimensionLoader>();
+            return services;
+        }
 
         services.AddSingleton<IStagingRepository, SqlStagingRepository>();
 
